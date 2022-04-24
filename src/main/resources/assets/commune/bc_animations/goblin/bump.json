@@ -137,44 +137,6 @@
           ]
         }
       ]
-    },
-    {
-      "0.0": [
-        {
-          "name": "rightEar",
-          "rotation": [
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "name": "leftEar",
-          "rotation": [
-            0,
-            0,
-            0
-          ]
-        }
-      ],
-      "16.25": [
-        {
-          "name": "rightEar",
-          "rotation": [
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "name": "leftEar",
-          "rotation": [
-            0,
-            0,
-            0
-          ]
-        }
-      ]
     }
   ]
 }

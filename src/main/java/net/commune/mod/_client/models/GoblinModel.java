@@ -9,6 +9,7 @@ import net.bottomtextdanny.braincell.mod._base.rendering.core_modeling.BCJoint;
 import net.bottomtextdanny.braincell.mod.rendering.modeling.BCEntityModel;
 import net.commune.Commune;
 import net.commune.mod.content.entities.goblin.Goblin;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
@@ -25,6 +26,10 @@ public class GoblinModel extends BCEntityModel<Goblin> {
     private final EntityModelAnimator animator = new EntityModelAnimator(this, 0.0F);
     private final AnimationInterpreter walk = Braincell.client().getAnimationManager()
             .makeInterpreter(new ResourceLocation(Commune.ID, "goblin/walk"), this);
+    private final AnimationInterpreter throwAttack = Braincell.client().getAnimationManager()
+            .makeInterpreter(new ResourceLocation(Commune.ID, "goblin/throw"), this);
+    private final AnimationInterpreter bumpAttack = Braincell.client().getAnimationManager()
+            .makeInterpreter(new ResourceLocation(Commune.ID, "goblin/bump"), this);
 
     public GoblinModel() {
         texWidth = 32;
@@ -78,11 +83,14 @@ public class GoblinModel extends BCEntityModel<Goblin> {
     }
 
     @Override
-    public void handleKeyframedAnimations(Goblin entity, float limbSwing, float limbSwingAmount, float headYaw, float headPitch) {
-        super.handleKeyframedAnimations(entity, limbSwing, limbSwingAmount, headYaw, headPitch);
+    public void handleRotations(Goblin entity, float limbSwing, float limbSwingAmount, float ageInTicks, float headYaw, float headPitch) {
+        super.handleRotations(entity, limbSwing, limbSwingAmount, ageInTicks, headYaw, headPitch);
         this.head.xRot = Mth.clamp(headPitch, -50, 50) * RAD;
         this.head.yRot = Mth.clamp(headYaw, -70, 50) * RAD;
+    }
 
+    @Override
+    public void handleKeyframedAnimations(Goblin entity, float limbSwing, float limbSwingAmount, float headYaw, float headPitch) {
         float easedLimbSwing = Mth.clamp(caculateLimbSwingEasing(entity), 0.0F, 0.999F);
 
         if (easedLimbSwing > 0.0F) {
@@ -92,6 +100,19 @@ public class GoblinModel extends BCEntityModel<Goblin> {
             animator.setTimer(easedLimbSwing * 20.0F);
             animator.multiplier(walkMult);
             walk.run(animator);
+        }
+
+        animator.multiplier(1.0F);
+
+        if (entity.mainHandler.isPlayingNull()) return;
+
+
+        animator.setTimer(entity.mainHandler.dynamicProgress());
+
+        if (entity.mainHandler.isPlaying(Goblin.THROW)) {
+            throwAttack.run(animator);
+        } else if (entity.mainHandler.isPlaying(Goblin.BUMP)) {
+            bumpAttack.run(animator);
         }
     }
 
