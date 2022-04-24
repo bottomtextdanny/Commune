@@ -68,7 +68,7 @@ public class GoblinPsyche extends Psyche<Goblin> {
             }
         });
 
-        //these are the permanent-running actions, note that globalCheck is the first to be added, and therefore, processed each tick.
+        //these are the permanent-running actions, note that globalCheck is the first to be added, and therefore, is the first to be processed each tick.
         tryAddRunningAction(CHECKS_MODULE, globalCheck);
 
         tryAddRunningAction(CHECKS_MODULE, new TargetBullyAction(getMob(), PsycheGeneral.DEFAULT_TARGET_PARAMETERS));
