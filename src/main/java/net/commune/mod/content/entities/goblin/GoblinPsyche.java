@@ -76,6 +76,8 @@ public class GoblinPsyche extends Psyche<Goblin> {
         tryAddRunningAction(CHECKS_MODULE, new LookForAttackTargetAction<>(
                 getMob(), IntScheduler.simple(4),
                 PsycheGeneral.DEFAULT_TARGET_PARAMETERS, SearchNearestPredicates.nearestPlayer()));
+
+
     }
 
     private void onTargetFound() {
