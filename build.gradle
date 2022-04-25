@@ -97,17 +97,13 @@ repositories{
     }
 
     mavenCentral()
-
-    flatDir {
-        dir 'lib'
-    }
 }
 
 dependencies {
     minecraft 'net.minecraftforge:forge:1.18.2-40.1.0'
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     implementation fg.deobf('software.bernie.geckolib:geckolib-1.18-forge:3.0.15')
-    implementation fg.deobf("temp:braincell:1.01")
+    implementation fg.deobf("curse.maven:braincellapi-616354:3767924")
 }
 
 jar {
