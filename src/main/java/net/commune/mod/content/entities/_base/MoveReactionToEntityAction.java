@@ -1,9 +1,10 @@
 package net.commune.mod.content.entities._base;
 
 import net.bottomtextdanny.braincell.base.vector.DistanceCalc;
-import net.bottomtextdanny.braincell.mod._base.entity.psyche.Action;
-import net.bottomtextdanny.braincell.mod._base.entity.psyche.pos_finder.MobPosProcessor;
-import net.bottomtextdanny.braincell.mod.entity.targeting.*;
+
+import net.bottomtextdanny.braincell.mod.entity.psyche.Action;
+import net.bottomtextdanny.braincell.mod.entity.psyche.pos_finder.MobPosProcessor;
+import net.bottomtextdanny.braincell.mod.entity.psyche.targeting.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySelector;
@@ -134,5 +135,10 @@ public class MoveReactionToEntityAction<E extends PathfinderMob> extends Action<
         return Lazy.of(() -> {
             return this.mob.getBoundingBox().inflate(p_26069_, 4.0D, p_26069_);
         });
+    }
+
+    @Nullable
+    public LivingEntity getFocus() {
+        return focus;
     }
 }

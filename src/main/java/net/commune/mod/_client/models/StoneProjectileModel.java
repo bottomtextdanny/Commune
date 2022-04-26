@@ -29,8 +29,6 @@ public class StoneProjectileModel extends BCEntityModel<StoneProjectile> {
     public void handleRotations(StoneProjectile entity, float limbSwing, float limbSwingAmount, float ageInTicks, float headYaw, float headPitch) {
         super.handleRotations(entity, limbSwing, limbSwingAmount, ageInTicks, headYaw, headPitch);
 
-        //this.body.setPos(0, 1, 0);
-
         this.body.xRot = headPitch * RAD;
         this.body.yRot = headYaw * RAD;
     }

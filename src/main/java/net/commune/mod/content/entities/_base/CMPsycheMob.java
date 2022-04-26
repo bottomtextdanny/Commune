@@ -1,11 +1,17 @@
 package net.commune.mod.content.entities._base;
 
-import net.bottomtextdanny.braincell.mod._base.entity.psyche.Psyche;
+import net.bottomtextdanny.braincell.mod.entity.psyche.Psyche;
 import net.bottomtextdanny.braincell.mod.world.builtin_entities.ModuledMob;
 import net.bottomtextdanny.braincell.mod.world.entity_utilities.PsycheEntity;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CMPsycheMob extends ModuledMob implements PsycheEntity {
     private Psyche<?> psyche;
@@ -35,6 +41,25 @@ public abstract class CMPsycheMob extends ModuledMob implements PsycheEntity {
     }
 
     public abstract Psyche<?> makePsyche();
+
+    @Nullable
+    @Override
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+                                        DifficultyInstance difficulty,
+                                        MobSpawnType spawnType,
+                                        @Nullable SpawnGroupData group,
+                                        @Nullable CompoundTag tag) {
+        onAnyPossibleSpawn();
+        return super.finalizeSpawn(level, difficulty, spawnType, group, tag);
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        onAnyPossibleSpawn();
+    }
+
+    protected void onAnyPossibleSpawn() {}
 
     @Override
     public Psyche<?> getPsyche() {

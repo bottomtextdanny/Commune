@@ -1,8 +1,9 @@
 package net.commune.mod._client.renderers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.bottomtextdanny.braincell.mod._base.entity.modules.variable.VariantProvider;
 import net.bottomtextdanny.braincell.mod._mod.client_sided.variant_data.VariantRenderingData;
+import net.bottomtextdanny.braincell.mod.entity.modules.variable.VariableModule;
+import net.bottomtextdanny.braincell.mod.entity.modules.variable.VariantProvider;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -23,22 +24,24 @@ public abstract class VariantRenderer<T extends Mob & VariantProvider, M extends
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void render(T entityIn, float entityYaw, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn, int packedLightIn) {
-		if (entityIn.variableModule().isUpdated() && entityIn.variableModule().getForm() != null) {
-            this.model = (M)((VariantRenderingData<T>)entityIn.variableModule().getForm().getRendering()).getModel(entityIn);
-		} else {
-            this.model = this.defaultModel;
-		}
-		
-		super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+	public void render(T entity, float entityYaw, float tickOffset, PoseStack pose, MultiBufferSource buffer, int packedLightIn) {
+		VariableModule module = entity.variableModule();
+
+		if (module.isUpdated() && module.getForm() != null)
+            this.model = (M)((VariantRenderingData<T>)module.getForm().getRendering()).getModel(entity);
+		else this.model = this.defaultModel;
+
+
+		super.render(entity, entityYaw, tickOffset, pose, buffer, packedLightIn);
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public ResourceLocation getTextureLocation(T entity) {
-		if (entity.variableModule().isUpdated() && entity.variableModule().getForm() != null) {
-			return ((VariantRenderingData<T>)entity.variableModule().getForm().getRendering()).getTexture(entity);
-		}
+		VariableModule module = entity.variableModule();
+
+		if (module.isUpdated() && module.getForm() != null)
+			return ((VariantRenderingData<T>)module.getForm().getRendering()).getTexture(entity);
 		return getDefaultEntityTexture(entity);
 	}
 	

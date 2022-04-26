@@ -23,6 +23,7 @@ public class GoblinRenderer extends VariantRenderer<Goblin, GoblinModel> {
 
     public GoblinRenderer(EntityRendererProvider.Context manager) {
         super(manager, new GoblinModel(), 0.25F);
+        addLayer(new GoblinWeaponRenderingLayer(this));
     }
 
     @Override

@@ -1,10 +1,10 @@
 package net.commune;
 
 import com.mojang.logging.LogUtils;
-import net.bottomtextdanny.braincell.mod._base.network.Connection;
 import net.bottomtextdanny.braincell.mod._base.registry.managing.DeferrorType;
 import net.bottomtextdanny.braincell.mod._base.registry.managing.ModDeferringManager;
 import net.bottomtextdanny.braincell.mod._mod.SortedCreativeTab;
+import net.bottomtextdanny.braincell.mod.network.Connection;
 import net.commune.mod.tables.CMEntities;
 import net.commune.mod.tables.CMItems;
 import net.minecraft.world.item.CreativeModeTab;

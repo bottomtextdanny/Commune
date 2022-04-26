@@ -1,15 +1,12 @@
 package net.commune.mod.content.entities.goblin;
 
-import com.mojang.math.Vector3f;
 import net.bottomtextdanny.braincell.base.ObjectFetcher;
-import net.bottomtextdanny.braincell.mod._base.network.Connection;
 import net.bottomtextdanny.braincell.mod._base.serialization.WorldPacketData;
 import net.bottomtextdanny.braincell.mod._base.serialization.builtin.BuiltinSerializers;
+import net.bottomtextdanny.braincell.mod.network.Connection;
 import net.bottomtextdanny.braincell.mod.world.entity_utilities.EntityClientMessenger;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.sounds.SoundEvents;

@@ -1,15 +1,14 @@
 package net.commune.mod.content.entities._base;
 
 import net.bottomtextdanny.braincell.base.BCMath;
-import net.bottomtextdanny.braincell.mod._base.entity.psyche.pos_finder.MobPosProcessor;
 import net.bottomtextdanny.braincell.mod.entity.psyche.pos_finder.MobPosComparators;
 import net.bottomtextdanny.braincell.mod.entity.psyche.pos_finder.MobPosPredicates;
-import net.bottomtextdanny.braincell.mod.entity.targeting.TargetPredicate;
-import net.bottomtextdanny.braincell.mod.entity.targeting.TargetRange;
-import net.bottomtextdanny.braincell.mod.entity.targeting.Targeter;
+import net.bottomtextdanny.braincell.mod.entity.psyche.pos_finder.MobPosProcessor;
+import net.bottomtextdanny.braincell.mod.entity.psyche.targeting.TargetPredicate;
+import net.bottomtextdanny.braincell.mod.entity.psyche.targeting.TargetRange;
+import net.bottomtextdanny.braincell.mod.entity.psyche.targeting.Targeter;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 

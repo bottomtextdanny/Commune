@@ -1,28 +1,30 @@
 package net.commune.mod.content.entities.goblin;
 
+import net.bottomtextdanny.braincell.base.ObjectFetcher;
 import net.bottomtextdanny.braincell.base.scheduler.IntScheduler;
-import net.bottomtextdanny.braincell.mod._base.entity.modules.animatable.AnimationArray;
-import net.bottomtextdanny.braincell.mod._base.entity.modules.animatable.AnimationGetter;
-import net.bottomtextdanny.braincell.mod._base.entity.modules.data_manager.BCDataManager;
-import net.bottomtextdanny.braincell.mod._base.entity.modules.looped_walk.LoopedWalkModule;
-import net.bottomtextdanny.braincell.mod._base.entity.modules.variable.*;
-import net.bottomtextdanny.braincell.mod._base.entity.psyche.Psyche;
+import net.bottomtextdanny.braincell.mod._base.serialization.WorldPacketData;
 import net.bottomtextdanny.braincell.mod._base.serialization.builtin.BuiltinSerializers;
 import net.bottomtextdanny.braincell.mod._mod.client_sided.variant_data.SimpleVariantRenderingData;
 import net.bottomtextdanny.braincell.mod._mod.client_sided.variant_data.VariantRenderingData;
+import net.bottomtextdanny.braincell.mod.entity.modules.animatable.AnimationArray;
+import net.bottomtextdanny.braincell.mod.entity.modules.animatable.AnimationGetter;
 import net.bottomtextdanny.braincell.mod.entity.modules.animatable.SimpleAnimation;
+import net.bottomtextdanny.braincell.mod.entity.modules.data_manager.BCDataManager;
+import net.bottomtextdanny.braincell.mod.entity.modules.looped_walk.LoopedWalkModule;
+import net.bottomtextdanny.braincell.mod.entity.modules.variable.Form;
+import net.bottomtextdanny.braincell.mod.entity.modules.variable.IndexedFormManager;
+import net.bottomtextdanny.braincell.mod.entity.modules.variable.IndexedVariableModule;
+import net.bottomtextdanny.braincell.mod.entity.psyche.Psyche;
 import net.bottomtextdanny.braincell.mod.entity.serialization.EntityData;
 import net.bottomtextdanny.braincell.mod.entity.serialization.EntityDataReference;
 import net.bottomtextdanny.braincell.mod.entity.serialization.RawEntityDataReference;
 import net.bottomtextdanny.braincell.mod.serialization.BCSerializers;
-import net.bottomtextdanny.braincell.mod.world.builtin_items.BCSpawnEggItem;
 import net.commune.mod._client.renderers.GoblinRenderer;
 import net.commune.mod.content.entities._base.CMPsycheMob;
-import net.commune.mod.tables.CMEntities;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -30,19 +32,26 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.Random;
 
 public class Goblin extends CMPsycheMob {
+    private static final int SYNC_WEAPONS_FLAG = 0;
     public static final float ATTACK_REACH_SQUARE = 1.1F;
+    public static final float MOUNT_SPEED_REDUCTION = 0.3F;
+    public static final float SOLDIER_ANGRY_SPEED_MULTIPLIER = 1.5F;
     public static final float ANGRY_SPEED_MULTIPLIER = 1.3F;
     public static final float RUN_AWAY_SPEED_MULTIPLIER = 1.6F;
+    public static final float MOUNT_PEER_RANGE = 1.5F;
     public static final float AVOID_RANGE = 2.5F;
     public static final float THROW_RANGE = 6.5F;
+    public static final float BARE_HANDS_PROB = 0.25F;
+    public static final float SWORD_TO_SPEAR_PROB = 0.45F;
+    public static final int MAX_MOUNT_CHAIN_SIZE = 5;
     public static final int MAX_STONES = 5;
     public static final Form<Goblin> GREEN = new Form<>() {
         @OnlyIn(Dist.CLIENT)
@@ -69,18 +78,18 @@ public class Goblin extends CMPsycheMob {
                     .add(GREEN)
                     .add(PURPLE)
                     .create();
-    public static final EntityDataReference<Integer> STONES_REF =
+    public static final EntityDataReference<IntScheduler.Variable> DEMOUNT_DELAY_REF =
             BCDataManager.attribute(Goblin.class,
                     RawEntityDataReference.of(
-                            BuiltinSerializers.INTEGER,
-                            () -> 4,
-                            "stones")
+                            BCSerializers.VARIABLE_INT_SCHEDULER,
+                            () -> IntScheduler.ranged(200, 240),
+                            "demount_delay")
             );
-    public static final EntityDataReference<IntScheduler.Simple> THROW_DELAY_REF =
+    public static final EntityDataReference<IntScheduler.Variable> THROW_DELAY_REF =
             BCDataManager.attribute(Goblin.class,
                     RawEntityDataReference.of(
-                            BCSerializers.INT_SCHEDULER,
-                            () -> IntScheduler.simple(60),
+                            BCSerializers.VARIABLE_INT_SCHEDULER,
+                            () -> IntScheduler.ranged(40, 70),
                             "throw_delay")
             );
     public static final EntityDataReference<IntScheduler.Simple> STONE_READDITION_DELAY_REF =
@@ -90,22 +99,70 @@ public class Goblin extends CMPsycheMob {
                             () -> IntScheduler.simple(100),
                             "stone_delay")
             );
+    public static final EntityDataReference<Integer> STONES_REF =
+            BCDataManager.attribute(Goblin.class,
+                    RawEntityDataReference.of(
+                            BuiltinSerializers.INTEGER,
+                            () -> 4,
+                            "stones")
+            );
+    public static final EntityDataReference<Byte> LEFT_WEAPON_REF =
+            BCDataManager.attribute(Goblin.class,
+                    RawEntityDataReference.of(
+                            BuiltinSerializers.BYTE,
+                            () -> (byte) -1,
+                            "left_weapon")
+            );
+    public static final EntityDataReference<Byte> RIGHT_WEAPON_REF =
+            BCDataManager.attribute(Goblin.class,
+                    RawEntityDataReference.of(
+                            BuiltinSerializers.BYTE,
+                            () -> (byte) -1,
+                            "right_weapon")
+            );
+    public static final EntityDataReference<Boolean> WEAPONS_SETTLED_REF =
+            BCDataManager.attribute(Goblin.class,
+                    RawEntityDataReference.of(
+                            BuiltinSerializers.BOOLEAN,
+                            () -> false,
+                            "updated_weapons")
+            );
+    public static final SimpleAnimation DOUBLE_SLASH = new SimpleAnimation(21);
+    public static final SimpleAnimation SLASH_LEFT = new SimpleAnimation(16);
+    public static final SimpleAnimation SLASH_RIGHT = new SimpleAnimation(16);
+    public static final SimpleAnimation STAB_LEFT = new SimpleAnimation(17);
+    public static final SimpleAnimation STAB_RIGHT = new SimpleAnimation(17);
     public static final SimpleAnimation THROW = new SimpleAnimation(18);
     public static final SimpleAnimation BUMP = new SimpleAnimation(17);
-    public static final AnimationArray ANIMATIONS = new AnimationArray(THROW, BUMP);
+    public static final AnimationArray ANIMATIONS = new AnimationArray(
+            DOUBLE_SLASH, SLASH_LEFT, SLASH_RIGHT, STAB_LEFT, STAB_RIGHT, THROW, BUMP);
+    private final EntityData<Byte> leftWeapon;
+    private final EntityData<Byte> rightWeapon;
+    private final EntityData<Boolean> updatedWeapons;
     public final EntityData<Integer> stones;
-    public final EntityData<IntScheduler.Simple> throwDelay;
+    public final EntityData<IntScheduler.Variable> demountDelay;
+    public final EntityData<IntScheduler.Variable> throwDelay;
     public final EntityData<IntScheduler.Simple> stoneDelay;
+    private final IntScheduler meleeAttackDelay;
+    private final IntScheduler mountDelay;
+    private final IntScheduler waitForAvoid;
+    private final IntScheduler waitForMount;
     private final IntScheduler waitForThrow;
-    private final IntScheduler meleeAtackDelay;
 
     public Goblin(EntityType<? extends PathfinderMob> type, Level worldIn) {
         super(type, worldIn);
-        this.stones = bcDataManager().addNonSyncedData(EntityData.of(STONES_REF));
+        this.updatedWeapons = bcDataManager().addNonSyncedData(EntityData.of(WEAPONS_SETTLED_REF));
+        this.demountDelay = bcDataManager().addNonSyncedData(EntityData.of(DEMOUNT_DELAY_REF));
         this.throwDelay = bcDataManager().addNonSyncedData(EntityData.of(THROW_DELAY_REF));
         this.stoneDelay = bcDataManager().addNonSyncedData(EntityData.of(STONE_READDITION_DELAY_REF));
+        this.stones = bcDataManager().addNonSyncedData(EntityData.of(STONES_REF));
+        this.leftWeapon = bcDataManager().addSyncedData(EntityData.of(LEFT_WEAPON_REF));
+        this.rightWeapon = bcDataManager().addSyncedData(EntityData.of(RIGHT_WEAPON_REF));
+        this.meleeAttackDelay = IntScheduler.ranged(3, 15);
+        this.mountDelay = IntScheduler.ranged(30, 130);
+        this.waitForAvoid = IntScheduler.simple(30);
+        this.waitForMount = IntScheduler.simple(50);
         this.waitForThrow = IntScheduler.ranged(4, 6);
-        this.meleeAtackDelay = IntScheduler.ranged(3, 15);
     }
 
     public static AttributeSupplier.Builder attributes() {
@@ -118,7 +175,9 @@ public class Goblin extends CMPsycheMob {
                 .add(Attributes.ATTACK_DAMAGE, 5.0D);
     }
 
-    public static boolean spawningParameters(EntityType<? extends LivingEntity> entityType, LevelAccessor worldIn, MobSpawnType reason, BlockPos pos, Random rand) {
+    public static boolean spawningParameters(EntityType<? extends LivingEntity> entityType,
+                                             LevelAccessor worldIn, MobSpawnType reason,
+                                             BlockPos pos, Random rand) {
         return worldIn.getDifficulty() != Difficulty.PEACEFUL && worldIn.getLightEmission(pos) < 7;
     }
 
@@ -140,6 +199,26 @@ public class Goblin extends CMPsycheMob {
     }
 
     @Override
+    protected void onAnyPossibleSpawn() {
+        if (!this.updatedWeapons.get()) {
+            float bareHandsProb = BARE_HANDS_PROB * this.level.getDifficulty().getId();
+
+            if (bareHandsProb > 0.0F) {
+                chooseWeapon(bareHandsProb, true);
+                chooseWeapon(bareHandsProb, false);
+            }
+            this.updatedWeapons.set(true);
+        }
+    }
+
+    protected void chooseWeapon(float bareHandsProb, boolean leftHand) {
+        if (random.nextFloat() < bareHandsProb) {
+            if (random.nextFloat() < SWORD_TO_SPEAR_PROB) GoblinWeapon.SWORD.arm(this, leftHand);
+            else GoblinWeapon.SPEAR.arm(this, leftHand);
+        }
+    }
+
+    @Override
     public Form<?> chooseVariant() {
         return random.nextBoolean() ? GREEN : PURPLE;
     }
@@ -147,26 +226,97 @@ public class Goblin extends CMPsycheMob {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (source.getEntity() != null && source.getEntity() instanceof LivingEntity livingTarget) {
-            this.waitForThrow.incrementFreely(40);
+            this.waitForThrow.incrementFreely(random.nextInt(20, 50));
         }
         return super.hurt(source, amount);
     }
 
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void clientCallOutHandler(int flag, ObjectFetcher fetcher) {
+        super.clientCallOutHandler(flag, fetcher);
+        if (flag == SYNC_WEAPONS_FLAG) {
+            byte serverLeftWeapon = fetcher.get(0, Byte.class);
+            byte serverRightWeapon = fetcher.get(1, Byte.class);
+
+            this.leftWeapon.set(serverLeftWeapon);
+            this.rightWeapon.set(serverLeftWeapon);
+        }
+    }
+
+    private void syncWeaponsToClient() {
+        sendClientMsg(SYNC_WEAPONS_FLAG,
+                WorldPacketData.of(BuiltinSerializers.BYTE, this.leftWeapon.get()),
+                WorldPacketData.of(BuiltinSerializers.BYTE, this.rightWeapon.get()));
+    }
+
+    @Override
+    public double getPassengersRidingOffset() {
+        return super.getPassengersRidingOffset() + 0.115F;
+    }
+
     @Override
     public float getLoopWalkMultiplier() {
-        return 0.8F;
+        return 0.77F;
+    }
+
+    public void setLeftWeapon(GoblinWeapon weapon) {
+        this.leftWeapon.set((byte) weapon.getIndex());
+    }
+
+    public void setRightWeapon(GoblinWeapon weapon) {
+        this.rightWeapon.set((byte) weapon.getIndex());
+    }
+
+    public GoblinWeapon getLeftWeapon() {
+        return GoblinWeapon.values()[(int)this.leftWeapon.get() + 1];
+    }
+
+    public GoblinWeapon getRightWeapon() {
+        return GoblinWeapon.values()[(int)this.rightWeapon.get() + 1];
+    }
+
+    public boolean hasLeftWeapon() {
+        return (int)this.leftWeapon.get() != GoblinWeapon.NONE.getIndex()
+                && (int)this.leftWeapon.get() < GoblinWeapon.values().length;
+    }
+
+    public boolean hasRightWeapon() {
+        return (int)this.rightWeapon.get() != GoblinWeapon.NONE.getIndex()
+                && (int)this.rightWeapon.get() < GoblinWeapon.values().length;
+    }
+
+    public boolean hasTwoWeapons() {
+        return hasLeftWeapon() && hasRightWeapon();
+    }
+
+    public boolean hasWeapon(GoblinWeapon weapon) {
+        return (int)this.leftWeapon.get() == weapon.getIndex()
+                || (int)this.rightWeapon.get() == weapon.getIndex();
+    }
+
+    public IntScheduler getMeleeAttackDelay() {
+        return meleeAttackDelay;
+    }
+
+    public IntScheduler getMountDelay() {
+        return mountDelay;
+    }
+
+    public IntScheduler getWaitForAvoid() {
+        return waitForAvoid;
+    }
+
+    public IntScheduler getWaitForMount() {
+        return waitForMount;
     }
 
     public IntScheduler getWaitForThrow() {
         return waitForThrow;
     }
 
-    public IntScheduler getMeleeAtackDelay() {
-        return meleeAtackDelay;
-    }
-
     @Override
     public boolean removeWhenFarAway(double v) {
-        return true;
+        return false;
     }
 }
