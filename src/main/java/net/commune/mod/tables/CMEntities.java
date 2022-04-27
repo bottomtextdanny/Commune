@@ -15,7 +15,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.levelgen.Heightmap;
 
-public class CMEntities {
+public final class CMEntities {
     public static final BCRegistry<EntityType<?>> ENTRIES = new BCRegistry<>();
 
     //*\\*//*\\*//*\\MOBS START\*//*\\*//*\\*//*\\*//*\\*//*\\*//*\\*//*\\*//*\\*//*\\*//*\\*//*\\*//*\\*//*\\*//
@@ -53,7 +53,7 @@ public class CMEntities {
     }
 
     private static <E extends Mob> BCMobBuilder<E> startBraincellMob(String entityId, EntityType.EntityFactory<E> factory) {
-        BCMobBuilder<E> builder = new BCMobBuilder<E>(ENTRIES, Commune.BC_REGISTRY_MANAGER);
+        BCMobBuilder<E> builder = new BCMobBuilder<>(ENTRIES, Commune.BC_REGISTRY_MANAGER);
         builder.declare(entityId, factory);
         return builder;
     }
@@ -61,4 +61,6 @@ public class CMEntities {
     public static BCSpawnEggItem.Builder braincellEggBuilder(int primaryTint, int secondaryTint) {
         return BCSpawnEggItem.createBuilder(primaryTint, secondaryTint).properties(new Item.Properties().tab(Commune.TAB));
     }
+
+    private CMEntities() {}
 }

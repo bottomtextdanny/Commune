@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
 
 import static net.bottomtextdanny.braincell.mod.entity.psyche.pos_finder.MobPosProcessors.*;
 
-public class PsycheGeneral {
+public final class PsycheGeneral {
     public static final TargetPredicate DEFAULT_TARGET_PARAMETERS = Targeter.Builder
             .start(TargetRange.followRange())
             .isForCombat()
@@ -44,4 +44,6 @@ public class PsycheGeneral {
     public static Vec2 rotationsToTarget(Vec3 vec1, Vec3 vec2) {
         return rotationsToTarget(vec1.x, vec1.y, vec1.z, vec2.x, vec2.y, vec2.z);
     }
+
+    private PsycheGeneral() {}
 }

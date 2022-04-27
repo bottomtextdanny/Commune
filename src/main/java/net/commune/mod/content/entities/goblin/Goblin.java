@@ -176,6 +176,7 @@ public class Goblin extends CMPsycheMob {
 
     public Goblin(EntityType<? extends PathfinderMob> type, Level worldIn) {
         super(type, worldIn);
+        this.xpReward = 4;
         this.updatedWeapons = bcDataManager().addNonSyncedData(EntityData.of(WEAPONS_SETTLED_REF));
         this.demountDelay = bcDataManager().addNonSyncedData(EntityData.of(DEMOUNT_DELAY_REF));
         this.throwDelay = bcDataManager().addNonSyncedData(EntityData.of(THROW_DELAY_REF));
@@ -236,7 +237,7 @@ public class Goblin extends CMPsycheMob {
         if (group instanceof GoblinGroupData goblinData) data = goblinData;
         else data = new GoblinGroupData(chooseVariant());
 
-        this.variableModule.setForm(data.variant());
+        if (data.variant() != null) variableModule().setForm(data.variant());
 
         return data;
     }

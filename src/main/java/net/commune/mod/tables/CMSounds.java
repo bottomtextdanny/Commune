@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.Item;
 
-public class CMSounds {
+public final class CMSounds {
     public static final BCRegistry<SoundEvent> ENTRIES = new BCRegistry<>();
     public static final RegistryHelper<SoundEvent> HELPER = new RegistryHelper<>(Commune.BC_REGISTRY_MANAGER, ENTRIES);
 
@@ -25,4 +25,6 @@ public class CMSounds {
     public static Wrap<SoundEvent> defer(String path) {
         return HELPER.defer(path.substring(path.lastIndexOf('.') + 1), () -> new SoundEvent(new ResourceLocation(Commune.ID, path)));
     }
+
+    private CMSounds() {}
 }
