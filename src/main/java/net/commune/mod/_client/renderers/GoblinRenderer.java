@@ -15,6 +15,10 @@ public class GoblinRenderer extends VariantRenderer<Goblin, GoblinModel> {
             new ResourceLocation(Commune.ID, "textures/entity/goblin/purple_goblin.png");
     public static final ResourceLocation TEXTURES_GREEN =
             new ResourceLocation(Commune.ID, "textures/entity/goblin/green_goblin.png");
+    public static final ResourceLocation TEXTURES_RED =
+            new ResourceLocation(Commune.ID, "textures/entity/goblin/red_goblin.png");
+    public static final ResourceLocation TEXTURES_BLUE =
+            new ResourceLocation(Commune.ID, "textures/entity/goblin/blue_goblin.png");
     public static final GoblinModel MODEL = new GoblinModel();
 
     public GoblinRenderer(Object manager) {

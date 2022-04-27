@@ -7,6 +7,7 @@ import net.bottomtextdanny.braincell.base.value_mapper.FloatMapper;
 import net.bottomtextdanny.braincell.base.value_mapper.FloatMappers;
 import net.bottomtextdanny.braincell.base.value_mapper.RandomIntegerMapper;
 import net.bottomtextdanny.braincell.base.vector.DistanceCalc;
+import net.bottomtextdanny.braincell.mod._base.plotter.iterator_support.PlotterPredicates;
 import net.bottomtextdanny.braincell.mod.entity.modules.animatable.SimpleAnimation;
 import net.bottomtextdanny.braincell.mod.entity.modules.variable.Form;
 import net.bottomtextdanny.braincell.mod.entity.psyche.Action;
@@ -27,13 +28,11 @@ import net.bottomtextdanny.braincell.mod.world.helpers.ReachHelper;
 import net.commune.mod.content.entities._base.MoveReactionToEntityAction;
 import net.commune.mod.content.entities._base.PsycheGeneral;
 import net.commune.mod.tables.CMEntities;
+import net.commune.mod.tables.CMSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.EntitySelector;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -45,26 +44,24 @@ import java.util.function.Function;
 import static net.bottomtextdanny.braincell.mod.entity.psyche.pos_finder.MobPosProcessors.*;
 
 public class GoblinPsyche extends Psyche<Goblin> {
-    public static final MobPosProcessor<LivingEntity> AVOID_POS = compose(
-            (blockPos, mob, randomGenerator, target) -> {
-                Vec3 posDiff = mob.position().subtract(target.position());
-                float oppositeFromTargetRad = (float) Mth.atan2(posDiff.z, posDiff.x) + BCMath.FPI;
+    public static final MobPosProcessor<LivingEntity> AVOID_POS = compose((blockPos, mob, randomGenerator, target) -> {
+        Vec3 posDiff = mob.position().subtract(target.position());
+        float oppositeFromTargetRad = (float) Mth.atan2(posDiff.z, posDiff.x) + BCMath.FPI;
 
-                FloatMapper angleAwayFromTarget = FloatMapper.from(
-                        oppositeFromTargetRad - 20 * BCMath.FRAD,
-                        oppositeFromTargetRad + 20 * BCMath.FRAD,
-                        FloatRandomPicker.normal());
+        FloatMapper angleAwayFromTarget = FloatMapper.from(
+                oppositeFromTargetRad - 20 * BCMath.FRAD,
+                oppositeFromTargetRad + 20 * BCMath.FRAD,
+                FloatRandomPicker.normal());
 
-                FloatMapper stepAway = FloatMapper.of(14);
+        FloatMapper stepAway = FloatMapper.of(14);
 
-                return stack().generic(LivingEntity.class)
-                        .push(advanceHorizontal(angleAwayFromTarget, stepAway))
-                        .push(sample(10, randomOffset(3, 4, 3), evaluateAvoidingPos(mob)));
-            });
-    public static final MobPosProcessor<Goblin> SEEK_PEER = compose(
-            (blockPos, mob, randomGenerator, peer) -> {
-                return (blockPos1, mob1, randomGenerator1, peer1) -> peer1.blockPosition();
-            });
+        return stack().generic(LivingEntity.class)
+                .push(advanceHorizontal(angleAwayFromTarget, stepAway))
+                .push(sample(10, randomOffset(3, 4, 3), evaluateAvoidingPos(mob)));
+    });
+    public static final MobPosProcessor<LivingEntity> SEEK_PEER = compose((blockPos, mob, randomGenerator, peer) -> {
+        return (blockPos1, mob1, randomGenerator1, peer1) -> peer1.blockPosition();
+    });
     private static final TargetPredicate OPPOSITE_GOBLIN = (mob, target) -> {
         return target instanceof Goblin targetGoblin
                 && targetGoblin.variableModule().getForm() != ((Goblin)mob).variableModule().getForm()
@@ -76,11 +73,26 @@ public class GoblinPsyche extends Psyche<Goblin> {
     };
     private static final TargetPredicate MOUNTABLE_PEER = (mob, target) -> {
         if (target instanceof Goblin targetGoblin) {
+
             if (!CombatHelper.isValidAttackTarget(target)) return false;
 
             if (target.getPassengers().size() > Goblin.MAX_MOUNT_CHAIN_SIZE) return false;
 
-            if (target.isPassenger() && target.getVehicle() instanceof Goblin) return false;
+            if (!target.isPassenger() && target.getVehicle() instanceof Goblin) return false;
+
+            if (mob.getRandom().nextFloat() < 0.2F) {
+                float height = (float) target.getPassengersRidingOffset() + mob.getBbHeight();
+
+                for (Entity entity : target.getPassengers()) {
+                    height += (float) entity.getPassengersRidingOffset();
+                }
+
+                BlockPos targetPosOffset = new BlockPos(target.position()
+                        .add(0.0F, height, 0.0F));
+
+                if (mob.level.getBlockState(targetPosOffset).getMaterial().isSolid())
+                    return false;
+            }
 
             return targetGoblin.variableModule().getForm() == ((Goblin)mob).variableModule().getForm();
         }
@@ -146,7 +158,7 @@ public class GoblinPsyche extends Psyche<Goblin> {
         this.slashAction = new SlashAction(this.getMob());
         this.stabAction = new StabAction(this.getMob());
 
-        this.mountPeerAction = new MoveReactionToEntityAction<>(getMob(), MOUNTABLE_PEER, AVOID_POS)
+        this.mountPeerAction = new MoveReactionToEntityAction<>(getMob(), MOUNTABLE_PEER, SEEK_PEER)
                 .speedByTarget(target -> Goblin.RUN_AWAY_SPEED_MULTIPLIER)
                 .setRefreshRate(25)
                 .searchRange(() -> getMob().getAttribute(Attributes.FOLLOW_RANGE).getValue() * 0.5F)
@@ -170,7 +182,7 @@ public class GoblinPsyche extends Psyche<Goblin> {
             }
 
             return speed;
-        }).setRefreshRate(12);
+        }).setRefreshRate(16);
         //when goblin is following a target, every action running on IDLE_ACTIONS_MODULE will be ignored.
         this.followTargetAction.addBlockedModule(IDLE_ACTIONS_MODULE);
 
@@ -460,6 +472,10 @@ public class GoblinPsyche extends Psyche<Goblin> {
             LivingEntity target = this.mob.getTarget();
 
             if (CombatHelper.isValidAttackTarget(target)) {
+
+                if (animationTick == 6)
+                    this.mob.playSound(CMSounds.GOBLIN_ATTACK.get(), 1.0F, 0.9F + RANDOM.nextFloat() * 0.2F);
+
                 if (animationTick == 7) {
                    this.mob.throwDelay.get().reset();
                    this.mob.stones.set(this.mob.stones.get() - 1);
@@ -501,6 +517,9 @@ public class GoblinPsyche extends Psyche<Goblin> {
 
             if (CombatHelper.isValidAttackTarget(target)) {
 
+                if (animationTick == 6)
+                    this.mob.playSound(CMSounds.GOBLIN_ATTACK.get(), 1.0F, 0.9F + RANDOM.nextFloat() * 0.2F);
+
                 if (animationTick == 8 && ReachHelper.reachSqr(this.mob, target) < Goblin.ATTACK_REACH_SQUARE * 1.2F) {
                     CombatHelper.attackWithMultiplier(this.mob, target, 1.0F + RANDOM.nextFloat() * 0.15F);
                     this.mob.getMeleeAttackDelay().reset();
@@ -530,6 +549,9 @@ public class GoblinPsyche extends Psyche<Goblin> {
             LivingEntity target = this.mob.getTarget();
 
             if (CombatHelper.isValidAttackTarget(target)) {
+
+                if (animationTick == 6)
+                    this.mob.playSound(CMSounds.GOBLIN_ATTACK.get(), 1.0F, 0.9F + RANDOM.nextFloat() * 0.2F);
 
                 if (animationTick == 8 && ReachHelper.reachSqr(this.mob, target) < Goblin.ATTACK_REACH_SQUARE * 1.2F) {
                     CombatHelper.attackWithMultiplier(this.mob, target, 1.5F * this.mob.getLeftWeapon().getDamageMultiplier() + RANDOM.nextFloat() * 0.15F);
@@ -608,6 +630,9 @@ public class GoblinPsyche extends Psyche<Goblin> {
         @Override
         public void handleTarget(int animationTick, LivingEntity target) {
 
+            if (animationTick == 6)
+                this.mob.playSound(CMSounds.GOBLIN_ATTACK.get(), 1.0F, 0.9F + RANDOM.nextFloat() * 0.2F);
+
             if (animationTick == 8 && ReachHelper.reachSqr(this.mob, target) < Goblin.ATTACK_REACH_SQUARE * 1.2F) {
                 GoblinWeapon weapon = this.usingLeftAnimation ? this.mob.getLeftWeapon()
                         : this.mob.getRightWeapon();
@@ -626,6 +651,9 @@ public class GoblinPsyche extends Psyche<Goblin> {
 
         @Override
         public void handleTarget(int animationTick, LivingEntity target) {
+
+            if (animationTick == 6)
+                this.mob.playSound(CMSounds.GOBLIN_ATTACK.get(), 1.0F, 0.9F + RANDOM.nextFloat() * 0.2F);
 
             if (animationTick == 8 && ReachHelper.reachSqr(this.mob, target) < Goblin.ATTACK_REACH_SQUARE * 1.4F) {
                 GoblinWeapon weapon = this.usingLeftAnimation ? this.mob.getLeftWeapon()

@@ -1,6 +1,7 @@
 package net.commune.mod.content.entities.goblin;
 
 import net.bottomtextdanny.braincell.base.ObjectFetcher;
+import net.bottomtextdanny.braincell.base.scheduler.IntScheduler;
 import net.bottomtextdanny.braincell.mod._base.serialization.WorldPacketData;
 import net.bottomtextdanny.braincell.mod._base.serialization.builtin.BuiltinSerializers;
 import net.bottomtextdanny.braincell.mod.network.Connection;
@@ -30,11 +31,13 @@ import net.minecraftforge.network.NetworkHooks;
 public class StoneProjectile extends AbstractArrow implements EntityClientMessenger {
     protected static int HIT_SOMETHING_FLAG = 0;
     public static float HIT_PARTICLE_AMOUNT = 15;
+    private IntScheduler stuckRemovalDelay;
 
     public StoneProjectile(EntityType<? extends StoneProjectile> type, Level worldIn) {
         super(type, worldIn);
         setSoundEvent(SoundEvents.STONE_BREAK);
         this.pickup = Pickup.DISALLOWED;
+        this.stuckRemovalDelay = IntScheduler.simple(40);
     }
 
     @Override
@@ -55,7 +58,13 @@ public class StoneProjectile extends AbstractArrow implements EntityClientMessen
     }
 
     protected void checkBlockCollisions() {
-        if (this.horizontalCollision || this.verticalCollision) {
+        if (getX() == xOld && getY() == yOld && getZ() == zOld) {
+            this.stuckRemovalDelay.incrementFreely(1);
+        } else {
+            this.stuckRemovalDelay.reset();
+        }
+
+        if (this.stuckRemovalDelay.hasEnded() || this.horizontalCollision || this.verticalCollision) {
             this.remove(RemovalReason.KILLED);
         }
     }

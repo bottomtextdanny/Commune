@@ -1,0 +1,55 @@
+{
+  "entity.goblin_attack": {
+    "sounds": [
+      "commune:entity/goblin_attack_0",
+      "commune:entity/goblin_attack_1",
+      "commune:entity/goblin_attack_2",
+      "commune:entity/goblin_attack_3",
+      "commune:entity/goblin_attack_4",
+      "commune:entity/goblin_attack_5",
+      "commune:entity/goblin_attack_6"
+    ],
+    "subtitle": "commune.subtitles.goblin_attack"
+  },
+  "entity.goblin_combat": {
+    "sounds": [
+      "commune:entity/goblin_combat_0",
+      "commune:entity/goblin_combat_1",
+      "commune:entity/goblin_combat_2",
+      "commune:entity/goblin_combat_3",
+      "commune:entity/goblin_combat_4",
+      "commune:entity/goblin_combat_5"
+    ],
+    "subtitle": "commune.subtitles.goblin_combat"
+  },
+  "entity.goblin_death": {
+    "sounds": [
+      "commune:entity/goblin_death_0",
+      "commune:entity/goblin_death_1",
+      "commune:entity/goblin_death_2"
+    ],
+    "subtitle": "commune.subtitles.goblin_death"
+  },
+  "entity.goblin_hurt": {
+    "sounds": [
+      "commune:entity/goblin_hurt_0",
+      "commune:entity/goblin_hurt_1",
+      "commune:entity/goblin_hurt_2",
+      "commune:entity/goblin_hurt_3",
+      "commune:entity/goblin_hurt_4"
+    ],
+    "subtitle": "commune.subtitles.goblin_hurt"
+  },
+  "entity.goblin_idle": {
+    "sounds": [
+      "commune:entity/goblin_idle_0",
+      "commune:entity/goblin_idle_1",
+      "commune:entity/goblin_idle_2",
+      "commune:entity/goblin_idle_3",
+      "commune:entity/goblin_idle_4",
+      "commune:entity/goblin_idle_5",
+      "commune:entity/goblin_idle_6"
+    ],
+    "subtitle": "commune.subtitles.goblin_idle"
+  }
+}

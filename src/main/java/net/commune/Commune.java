@@ -7,11 +7,13 @@ import net.bottomtextdanny.braincell.mod._mod.SortedCreativeTab;
 import net.bottomtextdanny.braincell.mod.network.Connection;
 import net.commune.mod.tables.CMEntities;
 import net.commune.mod.tables.CMItems;
+import net.commune.mod.tables.CMSounds;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -60,6 +62,9 @@ public final class Commune {
             client().modLoadingCallOut();
         });
 
+        MinecraftForge.EVENT_BUS.addListener(SpawnHooks::applySpawnToBiomes);
+
+        BC_REGISTRY_MANAGER.addRegistryDeferror(DeferrorType.SOUND_EVENT, CMSounds.ENTRIES);
         BC_REGISTRY_MANAGER.addRegistryDeferror(DeferrorType.ITEM, CMItems.ENTRIES);
         BC_REGISTRY_MANAGER.addRegistryDeferror(DeferrorType.ENTITY_TYPE, CMEntities.ENTRIES);
         BC_REGISTRY_MANAGER.solveAndLockForeverEver();

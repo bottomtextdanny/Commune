@@ -19,10 +19,13 @@ import net.bottomtextdanny.braincell.mod.entity.serialization.EntityData;
 import net.bottomtextdanny.braincell.mod.entity.serialization.EntityDataReference;
 import net.bottomtextdanny.braincell.mod.entity.serialization.RawEntityDataReference;
 import net.bottomtextdanny.braincell.mod.serialization.BCSerializers;
+import net.bottomtextdanny.braincell.mod.world.helpers.CombatHelper;
 import net.commune.mod._client.renderers.GoblinRenderer;
 import net.commune.mod.content.entities._base.CMPsycheMob;
+import net.commune.mod.tables.CMSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
@@ -35,8 +38,8 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nullable;
 import java.util.Random;
 
 public class Goblin extends CMPsycheMob {
@@ -73,10 +76,32 @@ public class Goblin extends CMPsycheMob {
             );
         }
     };
+    public static final Form<Goblin> RED = new Form<>() {
+        @OnlyIn(Dist.CLIENT)
+        @Override
+        protected VariantRenderingData<Goblin> createRenderingHandler() {
+            return new SimpleVariantRenderingData<>(
+                    GoblinRenderer.TEXTURES_RED,
+                    GoblinRenderer.MODEL
+            );
+        }
+    };
+    public static final Form<Goblin> BLUE = new Form<>() {
+        @OnlyIn(Dist.CLIENT)
+        @Override
+        protected VariantRenderingData<Goblin> createRenderingHandler() {
+            return new SimpleVariantRenderingData<>(
+                    GoblinRenderer.TEXTURES_BLUE,
+                    GoblinRenderer.MODEL
+            );
+        }
+    };
     public static final IndexedFormManager FORMS =
             IndexedFormManager.builder()
                     .add(GREEN)
                     .add(PURPLE)
+                    .add(RED)
+                    .add(BLUE)
                     .create();
     public static final EntityDataReference<IntScheduler.Variable> DEMOUNT_DELAY_REF =
             BCDataManager.attribute(Goblin.class,
@@ -175,10 +200,11 @@ public class Goblin extends CMPsycheMob {
                 .add(Attributes.ATTACK_DAMAGE, 5.0D);
     }
 
-    public static boolean spawningParameters(EntityType<? extends LivingEntity> entityType,
-                                             LevelAccessor worldIn, MobSpawnType reason,
-                                             BlockPos pos, Random rand) {
-        return worldIn.getDifficulty() != Difficulty.PEACEFUL && worldIn.getLightEmission(pos) < 7;
+    public static boolean spawningParameters(EntityType<? extends Goblin> entityType,
+                                             ServerLevelAccessor level, MobSpawnType reason,
+                                             BlockPos pos, Random random) {
+        return level.getDifficulty() != Difficulty.PEACEFUL
+                && Monster.isDarkEnoughToSpawn(level, pos, random) && checkMobSpawnRules(entityType, level, reason, pos, random);
     }
 
     @Override
@@ -196,6 +222,23 @@ public class Goblin extends CMPsycheMob {
     @Override
     public Psyche<?> makePsyche() {
         return new GoblinPsyche(this);
+    }
+
+    @Override
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+                                        DifficultyInstance difficulty,
+                                        MobSpawnType spawnType,
+                                        @Nullable SpawnGroupData group,
+                                        @Nullable CompoundTag tag) {
+        super.finalizeSpawn(level, difficulty, spawnType, group, tag);
+        GoblinGroupData data;
+
+        if (group instanceof GoblinGroupData goblinData) data = goblinData;
+        else data = new GoblinGroupData(chooseVariant());
+
+        this.variableModule.setForm(data.variant());
+
+        return data;
     }
 
     @Override
@@ -220,7 +263,7 @@ public class Goblin extends CMPsycheMob {
 
     @Override
     public Form<?> chooseVariant() {
-        return random.nextBoolean() ? GREEN : PURPLE;
+        return FORMS.getForm(random.nextInt(0, 4));
     }
 
     @Override
@@ -240,7 +283,7 @@ public class Goblin extends CMPsycheMob {
             byte serverRightWeapon = fetcher.get(1, Byte.class);
 
             this.leftWeapon.set(serverLeftWeapon);
-            this.rightWeapon.set(serverLeftWeapon);
+            this.rightWeapon.set(serverRightWeapon);
         }
     }
 
@@ -315,8 +358,28 @@ public class Goblin extends CMPsycheMob {
         return waitForThrow;
     }
 
+    @Nullable
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return CombatHelper.isValidAttackTarget(getTarget()) ? null : CMSounds.GOBLIN_IDLE.get();
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getDeathSound() {
+        return CMSounds.GOBLIN_DEATH.get();
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return CMSounds.GOBLIN_HURT.get();
+    }
+
     @Override
     public boolean removeWhenFarAway(double v) {
-        return false;
+        return true;
     }
+
+    protected record GoblinGroupData(Form<?> variant) implements SpawnGroupData {}
 }

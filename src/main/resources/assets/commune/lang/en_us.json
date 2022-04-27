@@ -1,0 +1,9 @@
+{
+  "commune.subtitles.goblin_attack": "Goblin Attack",
+  "commune.subtitles.goblin_combat": "Goblin Combat",
+  "commune.subtitles.goblin_death": "Goblin Death",
+  "commune.subtitles.goblin_hurt": "Goblin Hurt",
+  "commune.subtitles.goblin_idle": "Goblin Idle",
+  "entity.commune.goblin": "Goblin",
+  "entity.commune.stone_projectile": "Stone"
+}
