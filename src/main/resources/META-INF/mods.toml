@@ -10,16 +10,16 @@ updateJSONURL="http://my.issue.tracker/" #optional
 displayURL="http://my.issue.tracker/" #optional
 logoFile="commune_logo.png" #optional
 credits="God." #optional
-authors="BottomTextDanny, Peeko, Plummet Studios, Yosh, Coda." #optional
+authors="BottomTextDanny, Yosh." #optional
 description='''
 A community mod.
 '''
-[[dependencies.commune]] #optional
-    modId="geckolib3" #mandatory
-    mandatory=true #mandatory
-    versionRange="[3.0,)" #mandatory
-    ordering="NONE"
-    side="BOTH"
+#[[dependencies.commune]] #optional
+#    modId="geckolib3" #mandatory
+#    mandatory=true #mandatory
+#    versionRange="[3.0,)" #mandatory
+#    ordering="NONE"
+#    side="BOTH"
 [[dependencies.commune]] #optional
     modId="braincell" #mandatory
     mandatory=true #mandatory
